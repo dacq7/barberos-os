@@ -4,13 +4,12 @@ import AdminLayout from './components/layouts/AdminLayout'
 import BarberoLayout from './components/layouts/BarberoLayout'
 import AdminLogin from './pages/admin/AdminLogin'
 import BarberoLogin from './pages/barbero/BarberoLogin'
+import HomePage from './pages/public/HomePage'
 
 // ── Placeholders ──────────────────────────────────────────────────────────────
 const Page = ({ name }: { name: string }) => (
   <div className="text-neutral-300">{name}</div>
 )
-
-const Home = () => <Page name="Home — vista pública" />
 const Reservar = () => <Page name="Reservar" />
 const CitaEstado = () => <Page name="Cita — estado" />
 const CitaCancelar = () => <Page name="Cita — cancelar" />
@@ -31,7 +30,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         {/* Public */}
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<HomePage />} />
         <Route path="/reservar" element={<Reservar />} />
         <Route path="/citas/:id" element={<CitaEstado />} />
         <Route path="/citas/:id/cancelar" element={<CitaCancelar />} />
