@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, admin, horarios, citas, pagos
+from app.api.routes import auth, admin, horarios, citas, pagos, inventario
 
 app = FastAPI(title="BarberOS API", version="0.1.0")
 
@@ -19,6 +19,7 @@ app.include_router(admin.router, prefix="/api/v1")
 app.include_router(horarios.router, prefix="/api/v1")
 app.include_router(citas.router, prefix="/api/v1")
 app.include_router(pagos.router, prefix="/api/v1")
+app.include_router(inventario.router, prefix="/api/v1")
 
 
 @app.get("/health")
