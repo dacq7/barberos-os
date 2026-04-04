@@ -1,22 +1,12 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { cambiarEstadoCitaBarbero, getCitasBarbero } from '../../services/barbero.service'
+import { formatFecha, formatHora, todayBogota, toDateKeyBogota } from '../../utils/date'
 import type { CitaDetalle, EstadoCita } from '../../types'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const today = new Date().toISOString().split('T')[0]
-
-function toDateKey(fechaHora: string): string {
-  return new Date(fechaHora).toLocaleDateString('en-CA') // YYYY-MM-DD
-}
-
-function toHora(fechaHora: string): string {
-  return new Date(fechaHora).toLocaleTimeString('es-CO', {
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
+const today = todayBogota()
 
 const ESTADO_BADGE: Record<EstadoCita, { label: string; cls: string }> = {
   pendiente:  { label: 'Pendiente',     cls: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30' },
@@ -67,7 +57,7 @@ function CitaCard({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[#c9a84c] font-mono text-sm font-semibold">
-                  {toHora(cita.fecha_hora)}
+                  {formatHora(cita.fecha_hora)}
                 </span>
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${cls}`}>
                   {label}
@@ -144,14 +134,10 @@ export default function BarberoAgenda() {
   })
 
   const citasDelDia = (citas ?? [])
-    .filter((c) => toDateKey(c.fecha_hora) === fecha)
+    .filter((c) => toDateKeyBogota(c.fecha_hora) === fecha)
     .sort((a, b) => a.fecha_hora.localeCompare(b.fecha_hora))
 
-  const fechaLabel = new Date(`${fecha}T12:00:00`).toLocaleDateString('es-CO', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  })
+  const fechaLabel = formatFecha(`${fecha}T12:00:00-05:00`)
 
   return (
     <div className="space-y-5 max-w-xl">

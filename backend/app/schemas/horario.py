@@ -45,7 +45,7 @@ class BloqueoGeneralCreate(BaseModel):
 
 
 class SlotDisponible(BaseModel):
-    hora: time
+    hora: str
     disponible: bool
 
 

@@ -5,6 +5,7 @@ import {
   getAdminCitas,
   registrarPago,
 } from '../../services/admin.service'
+import { formatFechaHora } from '../../utils/date'
 import type { CitaDetalle, EstadoCita } from '../../types'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -15,16 +16,6 @@ function formatCOP(value: string | number): string {
     currency: 'COP',
     minimumFractionDigits: 0,
   }).format(Number(value))
-}
-
-function formatFechaHora(s: string): string {
-  const d = new Date(s)
-  return d.toLocaleString('es-CO', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
 }
 
 const ESTADO_BADGE: Record<EstadoCita, { label: string; cls: string }> = {

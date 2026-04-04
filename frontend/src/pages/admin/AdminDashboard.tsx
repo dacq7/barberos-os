@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { getAdminCitas, getResumenAdmin } from '../../services/admin.service'
+import { formatFecha, formatHora, todayBogota, toDateKeyBogota } from '../../utils/date'
 import type { EstadoCita } from '../../types'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -67,12 +68,9 @@ export default function AdminDashboard() {
     queryFn: () => getResumenAdmin(fechaInicio, fechaFin),
   })
 
-  const today = new Date()
+  const todayKey = todayBogota()
 
-  const citasHoy = citas?.filter((c) => {
-    const d = new Date(c.fecha_hora)
-    return d.toDateString() === today.toDateString()
-  }) ?? []
+  const citasHoy = citas?.filter((c) => toDateKeyBogota(c.fecha_hora) === todayKey) ?? []
 
   const pendientes = citas?.filter((c) => c.estado === 'pendiente').length ?? 0
   const confirmadas = citas?.filter((c) => c.estado === 'confirmada').length ?? 0
@@ -86,12 +84,7 @@ export default function AdminDashboard() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-white">Dashboard</h1>
         <span className="text-neutral-500 text-sm">
-          {today.toLocaleDateString('es-CO', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          })}
+          {formatFecha(new Date().toISOString())}
         </span>
       </div>
 
@@ -145,10 +138,7 @@ export default function AdminDashboard() {
         {!loadingCitas && citasHoyOrdenadas.length > 0 && (
           <div className="space-y-2">
             {citasHoyOrdenadas.map((c) => {
-              const hora = new Date(c.fecha_hora).toLocaleTimeString('es-CO', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })
+              const hora = formatHora(c.fecha_hora)
               const { label, cls } = ESTADO_BADGE[c.estado]
               return (
                 <div

@@ -196,7 +196,7 @@ export default function ReservarPage() {
       cliente_email: form.email,
       barbero_id: resolvedBarberoId,
       servicio_id: servicioId,
-      fecha_hora: `${fecha}T${horaSlot}`,
+      fecha_hora: `${fecha}T${horaSlot}:00`,
     }
     if (form.telefono) body.cliente_telefono = form.telefono
     if (form.notas) body.notas = form.notas

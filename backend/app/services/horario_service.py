@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import date, datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
@@ -75,17 +75,6 @@ async def crear_bloqueo_general(data: BloqueoGeneralCreate, db: AsyncSession) ->
     return {"id": str(bloqueo.id), "fecha_inicio": bloqueo.fecha_inicio, "fecha_fin": bloqueo.fecha_fin, "motivo": bloqueo.motivo}
 
 
-def _generate_slots(hora_inicio: time, hora_fin: time) -> list[time]:
-    slots = []
-    current = datetime.combine(date.today(), hora_inicio)
-    end = datetime.combine(date.today(), hora_fin)
-    step = timedelta(minutes=30)
-    while current + step <= end:
-        slots.append(current.time())
-        current += step
-    return slots
-
-
 async def get_disponibilidad(
     barbero_id: uuid.UUID, fecha: date, db: AsyncSession
 ) -> DisponibilidadResponse:
@@ -97,13 +86,18 @@ async def get_disponibilidad(
         )
     )
     horario = result.scalar_one_or_none()
-
     if not horario:
         return DisponibilidadResponse(fecha=fecha, barbero_id=barbero_id, slots=[])
 
-    slots = _generate_slots(horario.hora_inicio, horario.hora_fin)
+    # 2. Generar slots como strings "HH:MM"
+    slots: list[str] = []
+    current = datetime.combine(fecha, horario.hora_inicio)
+    end = datetime.combine(fecha, horario.hora_fin)
+    while current + timedelta(minutes=30) <= end:
+        slots.append(current.strftime("%H:%M"))
+        current += timedelta(minutes=30)
 
-    # 2. Verificar bloqueos del barbero
+    # 3. Bloqueos: devolver vacío si el día está bloqueado
     res_bb = await db.execute(
         select(BarberoBloqueo).where(
             and_(
@@ -113,9 +107,9 @@ async def get_disponibilidad(
             )
         )
     )
-    barbero_bloqueado = res_bb.scalar_one_or_none() is not None
+    if res_bb.scalar_one_or_none():
+        return DisponibilidadResponse(fecha=fecha, barbero_id=barbero_id, slots=[])
 
-    # 3. Verificar bloqueos generales
     res_bg = await db.execute(
         select(BloqueoGeneral).where(
             and_(
@@ -124,47 +118,33 @@ async def get_disponibilidad(
             )
         )
     )
-    dia_bloqueado = res_bg.scalar_one_or_none() is not None
-
-    if barbero_bloqueado or dia_bloqueado:
-        return DisponibilidadResponse(
-            fecha=fecha,
-            barbero_id=barbero_id,
-            slots=[SlotDisponible(hora=s, disponible=False) for s in slots],
-        )
+    if res_bg.scalar_one_or_none():
+        return DisponibilidadResponse(fecha=fecha, barbero_id=barbero_id, slots=[])
 
     # 4. Citas existentes del barbero en esa fecha (estado != cancelada)
-    fecha_inicio_dt = datetime.combine(fecha, time.min)
-    fecha_fin_dt = datetime.combine(fecha, time.max)
     res_citas = await db.execute(
         select(Cita.fecha_hora).where(
             and_(
                 Cita.barbero_id == barbero_id,
-                Cita.fecha_hora >= fecha_inicio_dt,
-                Cita.fecha_hora <= fecha_fin_dt,
                 Cita.estado != EstadoCita.cancelada,
             )
         )
     )
-    horas_ocupadas: set[time] = {
-        row.astimezone(timezone.utc).replace(tzinfo=None).time()
-        if row.tzinfo
-        else row.time()
+    ocupados: set[str] = {
+        row.strftime("%H:%M")
         for row in res_citas.scalars().all()
+        if row.date() == fecha
     }
 
-    # 5. Slots pasados si es hoy (mínimo 30 min desde ahora)
-    ahora = datetime.now()
-    minimo_dt = ahora + timedelta(minutes=30) if fecha == date.today() else None
+    # 5. Descartar slots pasados si es hoy (mínimo 30 min desde ahora)
+    minimo = datetime.now() + timedelta(minutes=30) if fecha == date.today() else None
 
-    resultado = []
+    disponibles = []
     for slot in slots:
-        if slot in horas_ocupadas:
-            resultado.append(SlotDisponible(hora=slot, disponible=False))
+        if slot in ocupados:
             continue
-        if minimo_dt and datetime.combine(fecha, slot) < minimo_dt:
-            resultado.append(SlotDisponible(hora=slot, disponible=False))
+        if minimo and datetime.combine(fecha, datetime.strptime(slot, "%H:%M").time()) < minimo:
             continue
-        resultado.append(SlotDisponible(hora=slot, disponible=True))
+        disponibles.append(SlotDisponible(hora=slot, disponible=True))
 
-    return DisponibilidadResponse(fecha=fecha, barbero_id=barbero_id, slots=resultado)
+    return DisponibilidadResponse(fecha=fecha, barbero_id=barbero_id, slots=disponibles)

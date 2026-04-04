@@ -25,7 +25,7 @@ class Cita(Base):
     cliente_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("clientes.id"), nullable=False)
     barbero_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("barberos.id"), nullable=False)
     servicio_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("servicios.id"), nullable=False)
-    fecha_hora: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    fecha_hora: Mapped[datetime] = mapped_column(DateTime(timezone=False), nullable=False)
     estado: Mapped[EstadoCita] = mapped_column(SAEnum(EstadoCita), nullable=False, default=EstadoCita.pendiente)
     notas: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     recordatorio_24h_enviado: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")

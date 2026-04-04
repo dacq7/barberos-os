@@ -2,6 +2,7 @@ import { Link, useLocation, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { cancelarCita, getCita } from '../../services/public.service'
 import { brand } from '../../config/brand'
+import { formatFecha, formatHora } from '../../utils/date'
 import type { EstadoCita } from '../../types'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -12,19 +13,6 @@ function formatCOP(value: string | number): string {
     currency: 'COP',
     minimumFractionDigits: 0,
   }).format(Number(value))
-}
-
-function formatFechaHora(fechaHora: string): { fecha: string; hora: string } {
-  const d = new Date(fechaHora)
-  return {
-    fecha: d.toLocaleDateString('es-CO', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    }),
-    hora: d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
-  }
 }
 
 const ESTADO_BADGE: Record<EstadoCita, { label: string; cls: string }> = {
@@ -132,7 +120,8 @@ export default function CitaPage() {
 
         {/* Contenido */}
         {cita && (() => {
-          const { fecha, hora } = formatFechaHora(cita.fecha_hora)
+          const fecha = formatFecha(cita.fecha_hora)
+          const hora = formatHora(cita.fecha_hora)
           return (
             <>
               {/* Detalle */}

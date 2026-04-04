@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -10,17 +10,6 @@ from app.db.models.cliente import Cliente
 from app.db.models.cita import Cita, EstadoCita
 from app.schemas.cita import CitaCreate, CitaOut, CitaDetalleOut, CambioEstadoRequest
 from app.services.horario_service import get_disponibilidad
-
-
-def _now_utc() -> datetime:
-    return datetime.now(timezone.utc)
-
-
-def _as_aware(dt: datetime) -> datetime:
-    """Devuelve el datetime con tzinfo=UTC si era naive."""
-    if dt.tzinfo is None:
-        return dt.replace(tzinfo=timezone.utc)
-    return dt
 
 
 async def _load_cita(cita_id: uuid.UUID, db: AsyncSession) -> Cita:
@@ -40,20 +29,20 @@ async def _load_cita(cita_id: uuid.UUID, db: AsyncSession) -> Cita:
 
 
 async def crear_cita(data: CitaCreate, db: AsyncSession) -> CitaDetalleOut:
-    fecha_hora = _as_aware(data.fecha_hora)
+    fecha_hora: datetime = data.fecha_hora  # naive, sin zona horaria
 
     # Validar mínimo 30 min en el futuro
-    if fecha_hora < _now_utc() + timedelta(minutes=30):
+    if fecha_hora < datetime.now() + timedelta(minutes=30):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="La cita debe reservarse al menos 30 minutos antes",
         )
 
     # Validar que el slot esté disponible
-    disponibilidad = await get_disponibilidad(data.barbero_id, data.fecha_hora.date(), db)
-    slot_time = data.fecha_hora.time().replace(second=0, microsecond=0)
+    disponibilidad = await get_disponibilidad(data.barbero_id, fecha_hora.date(), db)
+    slot_str = fecha_hora.strftime("%H:%M")
     slot_ok = any(
-        s.hora == slot_time and s.disponible
+        s.hora == slot_str
         for s in disponibilidad.slots
     )
     if not slot_ok:
@@ -104,8 +93,7 @@ async def cancelar_cita(cita_id: uuid.UUID, db: AsyncSession) -> CitaOut:
             detail="La cita ya está cancelada",
         )
 
-    fecha_hora = _as_aware(cita.fecha_hora)
-    if fecha_hora - _now_utc() < timedelta(hours=1):
+    if cita.fecha_hora - datetime.now() < timedelta(hours=1):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Solo se puede cancelar con al menos 1 hora de anticipación",
