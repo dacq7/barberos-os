@@ -52,6 +52,14 @@ async def listar_alertas(
     return await inventario_service.listar_alertas(db)
 
 
+@router.get("/barbero/inventario", response_model=list[InventarioOut])
+async def listar_inventario_barbero(
+    db: AsyncSession = Depends(get_db),
+    _=Depends(get_current_barbero),
+):
+    return await inventario_service.listar_inventario(db)
+
+
 @router.post("/barbero/inventario/alertas", response_model=AlertaOut, status_code=201)
 async def reportar_agotamiento(
     data: AlertaCreate,

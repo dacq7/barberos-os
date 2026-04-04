@@ -156,3 +156,8 @@ export interface PagoCreateRequest {
   cita_id: string
   monto_total: number
 }
+
+export interface AlertaCreateRequest {
+  inventario_id: string
+  mensaje?: string
+}

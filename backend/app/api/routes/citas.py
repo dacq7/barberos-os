@@ -42,6 +42,16 @@ async def cancelar_cita(
     return await cita_service.cancelar_cita(cita_id, db)
 
 
+@router.put("/barbero/citas/{cita_id}/estado", response_model=CitaOut)
+async def cambiar_estado_cita_barbero(
+    cita_id: uuid.UUID,
+    data: CambioEstadoRequest,
+    db: AsyncSession = Depends(get_db),
+    _=Depends(get_current_barbero),
+):
+    return await cita_service.cambiar_estado_cita(cita_id, data, db)
+
+
 @router.get("/admin/citas", response_model=list[CitaDetalleOut])
 async def listar_citas_admin(
     db: AsyncSession = Depends(get_db),
