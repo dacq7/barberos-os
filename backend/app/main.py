@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, admin, horarios, citas, pagos, inventario
+from app.api.routes import auth, admin, horarios, citas, pagos, inventario, public
 from app.services.scheduler_service import setup_scheduler
 
 app = FastAPI(title="BarberOS API", version="0.1.0")
@@ -21,6 +21,7 @@ app.include_router(horarios.router, prefix="/api/v1")
 app.include_router(citas.router, prefix="/api/v1")
 app.include_router(pagos.router, prefix="/api/v1")
 app.include_router(inventario.router, prefix="/api/v1")
+app.include_router(public.router, prefix="/api/v1")
 
 setup_scheduler(app)
 

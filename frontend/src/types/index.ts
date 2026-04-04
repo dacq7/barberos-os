@@ -110,3 +110,24 @@ export interface AlertaInventario {
   created_at: string
   producto_nombre: string
 }
+
+export interface SlotDisponible {
+  hora: string      // "HH:MM:SS"
+  disponible: boolean
+}
+
+export interface DisponibilidadResponse {
+  fecha: string
+  barbero_id: string
+  slots: SlotDisponible[]
+}
+
+export interface CitaCreateRequest {
+  cliente_nombre: string
+  cliente_email: string
+  cliente_telefono?: string
+  barbero_id: string
+  servicio_id: string
+  fecha_hora: string    // ISO datetime "YYYY-MM-DDTHH:MM:SS"
+  notas?: string
+}

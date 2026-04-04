@@ -5,14 +5,13 @@ import BarberoLayout from './components/layouts/BarberoLayout'
 import AdminLogin from './pages/admin/AdminLogin'
 import BarberoLogin from './pages/barbero/BarberoLogin'
 import HomePage from './pages/public/HomePage'
+import ReservarPage from './pages/public/ReservarPage'
+import CitaPage from './pages/public/CitaPage'
 
 // ── Placeholders ──────────────────────────────────────────────────────────────
 const Page = ({ name }: { name: string }) => (
   <div className="text-neutral-300">{name}</div>
 )
-const Reservar = () => <Page name="Reservar" />
-const CitaEstado = () => <Page name="Cita — estado" />
-const CitaCancelar = () => <Page name="Cita — cancelar" />
 const AdminDashboard = () => <Page name="Admin — Dashboard" />
 const AdminBarberos = () => <Page name="Admin — Barberos" />
 const AdminServicios = () => <Page name="Admin — Servicios" />
@@ -31,9 +30,9 @@ export default function App() {
       <Routes>
         {/* Public */}
         <Route path="/" element={<HomePage />} />
-        <Route path="/reservar" element={<Reservar />} />
-        <Route path="/citas/:id" element={<CitaEstado />} />
-        <Route path="/citas/:id/cancelar" element={<CitaCancelar />} />
+        <Route path="/reservar" element={<ReservarPage />} />
+        <Route path="/citas/:id" element={<CitaPage />} />
+        <Route path="/citas/:id/cancelar" element={<CitaPage />} />
 
         {/* Admin — auth */}
         <Route path="/admin/login" element={<AdminLogin />} />
