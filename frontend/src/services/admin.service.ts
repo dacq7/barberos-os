@@ -10,6 +10,12 @@ import type {
   Pago,
   PagoCreateRequest,
   ResumenAdmin,
+  Horario,
+  HorarioCreate,
+  Inventario,
+  InventarioCreate,
+  InventarioUpdate,
+  AlertaInventario,
 } from '../types'
 import { api } from './api'
 
@@ -71,5 +77,42 @@ export async function getResumenAdmin(
   const { data } = await api.get<ResumenAdmin>('/admin/pagos/resumen', {
     params: { fecha_inicio: fechaInicio, fecha_fin: fechaFin },
   })
+  return data
+}
+
+// ── Horarios ──────────────────────────────────────────────────────────────────
+
+export async function getHorarios(): Promise<Horario[]> {
+  const { data } = await api.get<Horario[]>('/horarios')
+  return data
+}
+
+export async function setHorario(payload: HorarioCreate): Promise<Horario> {
+  const { data } = await api.post<Horario>('/admin/horarios', payload)
+  return data
+}
+
+// ── Inventario (admin) ────────────────────────────────────────────────────────
+
+export async function getAdminInventario(): Promise<Inventario[]> {
+  const { data } = await api.get<Inventario[]>('/admin/inventario')
+  return data
+}
+
+export async function crearProducto(payload: InventarioCreate): Promise<Inventario> {
+  const { data } = await api.post<Inventario>('/admin/inventario', payload)
+  return data
+}
+
+export async function actualizarProducto(
+  id: string,
+  payload: InventarioUpdate,
+): Promise<Inventario> {
+  const { data } = await api.put<Inventario>(`/admin/inventario/${id}`, payload)
+  return data
+}
+
+export async function getAlertasInventario(): Promise<AlertaInventario[]> {
+  const { data } = await api.get<AlertaInventario[]>('/admin/inventario/alertas')
   return data
 }

@@ -161,3 +161,32 @@ export interface AlertaCreateRequest {
   inventario_id: string
   mensaje?: string
 }
+
+export interface Horario {
+  id: string
+  dia_semana: number   // 0=lunes … 6=domingo
+  hora_inicio: string  // "HH:MM:SS"
+  hora_fin: string     // "HH:MM:SS"
+  activo: boolean
+}
+
+export interface HorarioCreate {
+  dia_semana: number
+  hora_inicio: string  // "HH:MM"
+  hora_fin: string     // "HH:MM"
+  activo: boolean
+}
+
+export interface InventarioCreate {
+  nombre: string
+  cantidad: number
+  unidad?: string
+  umbral_minimo: number
+}
+
+export interface InventarioUpdate {
+  nombre?: string
+  cantidad?: number
+  unidad?: string
+  umbral_minimo?: number
+}
