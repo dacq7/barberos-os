@@ -3,6 +3,10 @@ import ProtectedRoute from './components/ProtectedRoute'
 import AdminLayout from './components/layouts/AdminLayout'
 import BarberoLayout from './components/layouts/BarberoLayout'
 import AdminLogin from './pages/admin/AdminLogin'
+import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminBarberos from './pages/admin/AdminBarberos'
+import AdminServicios from './pages/admin/AdminServicios'
+import AdminCitas from './pages/admin/AdminCitas'
 import BarberoLogin from './pages/barbero/BarberoLogin'
 import HomePage from './pages/public/HomePage'
 import ReservarPage from './pages/public/ReservarPage'
@@ -12,11 +16,7 @@ import CitaPage from './pages/public/CitaPage'
 const Page = ({ name }: { name: string }) => (
   <div className="text-neutral-300">{name}</div>
 )
-const AdminDashboard = () => <Page name="Admin — Dashboard" />
-const AdminBarberos = () => <Page name="Admin — Barberos" />
-const AdminServicios = () => <Page name="Admin — Servicios" />
 const AdminHorarios = () => <Page name="Admin — Horarios" />
-const AdminCitas = () => <Page name="Admin — Citas" />
 const AdminPagos = () => <Page name="Admin — Pagos" />
 const AdminInventario = () => <Page name="Admin — Inventario" />
 const BarberoAgenda = () => <Page name="Barbero — Agenda" />

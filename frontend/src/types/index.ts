@@ -131,3 +131,28 @@ export interface CitaCreateRequest {
   fecha_hora: string    // ISO datetime "YYYY-MM-DDTHH:MM:SS"
   notas?: string
 }
+
+export interface BarberoCreateRequest {
+  nombre: string
+  email: string
+  password: string
+  telefono?: string
+}
+
+export interface ServicioCreateRequest {
+  nombre: string
+  descripcion?: string
+  precio: number
+}
+
+export interface ServicioUpdateRequest {
+  nombre?: string
+  descripcion?: string
+  precio?: number
+  activo?: boolean
+}
+
+export interface PagoCreateRequest {
+  cita_id: string
+  monto_total: number
+}
