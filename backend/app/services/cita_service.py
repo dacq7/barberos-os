@@ -8,7 +8,7 @@ from fastapi import HTTPException, status
 
 from app.db.models.cliente import Cliente
 from app.db.models.cita import Cita, EstadoCita
-from app.schemas.cita import CitaCreate, CitaOut, CitaDetalleOut, CambioEstadoRequest
+from app.schemas.cita import CitaCreate, CitaOut, CitaDetalleOut, CambioEstadoRequest, ReagendarRequest
 from app.services.horario_service import get_disponibilidad
 
 
@@ -78,6 +78,41 @@ async def crear_cita(data: CitaCreate, db: AsyncSession) -> CitaDetalleOut:
     await db.refresh(cita)
 
     return CitaDetalleOut.model_validate(await _load_cita(cita.id, db))
+
+
+async def reagendar_cita(
+    cita_id: uuid.UUID, data: ReagendarRequest, db: AsyncSession
+) -> CitaDetalleOut:
+    cita = await _load_cita(cita_id, db)
+
+    if cita.estado == EstadoCita.cancelada:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No se puede reagendar una cita cancelada",
+        )
+
+    nueva_fecha_hora: datetime = data.nueva_fecha_hora
+    if nueva_fecha_hora < datetime.now() + timedelta(minutes=30):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La nueva fecha debe ser al menos 30 minutos en el futuro",
+        )
+
+    disponibilidad = await get_disponibilidad(cita.barbero_id, nueva_fecha_hora.date(), db)
+    slot_str = nueva_fecha_hora.strftime("%H:%M")
+    slot_ok = any(s.hora == slot_str for s in disponibilidad.slots)
+    if not slot_ok:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="El slot solicitado no está disponible",
+        )
+
+    cita.fecha_hora = nueva_fecha_hora
+    cita.recordatorio_24h_enviado = False
+    cita.recordatorio_2h_enviado = False
+    await db.commit()
+
+    return CitaDetalleOut.model_validate(await _load_cita(cita_id, db))
 
 
 async def get_cita(cita_id: uuid.UUID, db: AsyncSession) -> CitaDetalleOut:

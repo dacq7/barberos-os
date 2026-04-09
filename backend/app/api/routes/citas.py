@@ -11,6 +11,7 @@ from app.schemas.cita import (
     CitaDetalleOut,
     CancelacionRequest,
     CambioEstadoRequest,
+    ReagendarRequest,
 )
 from app.services import cita_service
 
@@ -40,6 +41,15 @@ async def cancelar_cita(
     db: AsyncSession = Depends(get_db),
 ):
     return await cita_service.cancelar_cita(cita_id, db)
+
+
+@router.patch("/citas/{cita_id}/reagendar", response_model=CitaDetalleOut)
+async def reagendar_cita(
+    cita_id: uuid.UUID,
+    data: ReagendarRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    return await cita_service.reagendar_cita(cita_id, data, db)
 
 
 @router.put("/barbero/citas/{cita_id}/estado", response_model=CitaOut)

@@ -55,6 +55,10 @@ class CitaDetalleOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class ReagendarRequest(BaseModel):
+    nueva_fecha_hora: datetime
+
+
 class CancelacionRequest(BaseModel):
     motivo: Optional[str] = None
 
