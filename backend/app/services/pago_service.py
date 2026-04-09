@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime, timezone
+from datetime import date, datetime
 from decimal import Decimal, ROUND_HALF_UP
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -66,8 +66,8 @@ async def get_resumen_barbero(
     if not barbero:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Barbero no encontrado")
 
-    inicio_dt = datetime(fecha_inicio.year, fecha_inicio.month, fecha_inicio.day, tzinfo=timezone.utc)
-    fin_dt = datetime(fecha_fin.year, fecha_fin.month, fecha_fin.day, 23, 59, 59, tzinfo=timezone.utc)
+    inicio_dt = datetime(fecha_inicio.year, fecha_inicio.month, fecha_inicio.day)
+    fin_dt = datetime(fecha_fin.year, fecha_fin.month, fecha_fin.day, 23, 59, 59)
 
     result = await db.execute(
         select(Pago)
@@ -98,8 +98,8 @@ async def get_resumen_barbero(
 async def get_resumen_admin(
     fecha_inicio: date, fecha_fin: date, db: AsyncSession
 ) -> ResumenAdmin:
-    inicio_dt = datetime(fecha_inicio.year, fecha_inicio.month, fecha_inicio.day, tzinfo=timezone.utc)
-    fin_dt = datetime(fecha_fin.year, fecha_fin.month, fecha_fin.day, 23, 59, 59, tzinfo=timezone.utc)
+    inicio_dt = datetime(fecha_inicio.year, fecha_inicio.month, fecha_inicio.day)
+    fin_dt = datetime(fecha_fin.year, fecha_fin.month, fecha_fin.day, 23, 59, 59)
 
     result = await db.execute(
         select(Pago)
