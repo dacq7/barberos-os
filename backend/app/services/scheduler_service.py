@@ -87,16 +87,5 @@ async def check_recordatorios() -> None:
             await db.rollback()
 
 
-def setup_scheduler(app) -> None:
-    scheduler = AsyncIOScheduler(timezone="UTC")
-    scheduler.add_job(check_recordatorios, trigger="interval", minutes=15, id="check_recordatorios")
-
-    @app.on_event("startup")
-    async def start_scheduler():
-        scheduler.start()
-        logger.info("Scheduler iniciado")
-
-    @app.on_event("shutdown")
-    async def stop_scheduler():
-        scheduler.shutdown(wait=False)
-        logger.info("Scheduler detenido")
+scheduler = AsyncIOScheduler(timezone="UTC")
+scheduler.add_job(check_recordatorios, trigger="interval", minutes=15, id="check_recordatorios")

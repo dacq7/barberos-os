@@ -4,7 +4,7 @@ from sqlalchemy import select
 
 from app.db.models.admin import Admin
 from app.db.models.barbero import Barbero
-from app.core.security import verify_password, create_access_token, create_refresh_token
+from app.core.security import verify_password, create_access_token, create_refresh_token, _decode_token
 from app.schemas.auth import LoginRequest, TokenResponse
 
 
@@ -52,3 +52,31 @@ async def login_barbero(data: LoginRequest, db: AsyncSession) -> TokenResponse:
         access_token=create_access_token(token_data),
         refresh_token=create_refresh_token(token_data),
     )
+
+
+async def refresh_access_token(refresh_token: str, db: AsyncSession) -> TokenResponse:
+    payload = _decode_token(refresh_token)
+
+    if payload.get("type") != "refresh":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token de refresco inválido",
+        )
+
+    role = payload.get("role")
+    user_id = payload.get("sub")
+
+    if role == "admin":
+        result = await db.execute(select(Admin).where(Admin.id == user_id))
+        user = result.scalar_one_or_none()
+    elif role == "barbero":
+        result = await db.execute(select(Barbero).where(Barbero.id == user_id))
+        user = result.scalar_one_or_none()
+    else:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido")
+
+    if not user or not user.activo:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no encontrado o inactivo")
+
+    token_data = {"sub": str(user.id), "role": role}
+    return TokenResponse(access_token=create_access_token(token_data))

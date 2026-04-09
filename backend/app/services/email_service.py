@@ -48,8 +48,8 @@ def _detalle_cita_html(cita: CitaDetalleOut) -> str:
 def send_confirmacion_cita(cita: CitaDetalleOut) -> None:
     resend.api_key = settings.RESEND_API_KEY
 
-    cancelar_url = f"https://barberos.com/citas/{cita.id}/cancelar"
-    reagendar_url = f"https://barberos.com/citas/{cita.id}/reagendar"
+    cancelar_url = f"{settings.BASE_URL}/citas/{cita.id}/cancelar"
+    reagendar_url = f"{settings.BASE_URL}/citas/{cita.id}/reagendar"
 
     cuerpo = f"""
   <p>Hola <strong>{cita.cliente.nombre}</strong>, tu cita ha sido confirmada.</p>
@@ -94,7 +94,7 @@ def send_cancelacion_por_barberia(cita: CitaDetalleOut) -> None:
 def send_recordatorio(cita: CitaDetalleOut, horas_antes: int) -> None:
     resend.api_key = settings.RESEND_API_KEY
 
-    cancelar_url = f"https://barberos.com/citas/{cita.id}/cancelar"
+    cancelar_url = f"{settings.BASE_URL}/citas/{cita.id}/cancelar"
 
     if horas_antes == 24:
         encabezado = "Recordatorio: tu cita es mañana"
