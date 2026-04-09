@@ -35,3 +35,13 @@ export async function cancelarCita(id: string): Promise<Cita> {
   const { data } = await api.post<Cita>(`/citas/${id}/cancelar`)
   return data
 }
+
+export async function reagendarCita(
+  citaId: string,
+  nuevaFechaHora: string,
+): Promise<CitaDetalle> {
+  const { data } = await api.patch<CitaDetalle>(`/citas/${citaId}/reagendar`, {
+    nueva_fecha_hora: nuevaFechaHora,
+  })
+  return data
+}

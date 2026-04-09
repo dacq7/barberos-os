@@ -1,9 +1,17 @@
+import { useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { cancelarCita, getCita } from '../../services/public.service'
+import { cancelarCita, getCita, getDisponibilidad, reagendarCita } from '../../services/public.service'
 import { brand } from '../../config/brand'
 import { formatFecha, formatHora } from '../../utils/date'
 import type { EstadoCita } from '../../types'
+
+const today = new Date().toISOString().split('T')[0]
+const maxDate = (() => {
+  const d = new Date()
+  d.setDate(d.getDate() + 30)
+  return d.toISOString().split('T')[0]
+})()
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -60,6 +68,10 @@ export default function CitaPage() {
     enabled: !!id,
   })
 
+  const [showReagendar, setShowReagendar] = useState(false)
+  const [reagFecha, setReagFecha] = useState('')
+  const [reagSlot, setReagSlot] = useState<string | null>(null)
+
   const cancelMutation = useMutation({
     mutationFn: () => cancelarCita(id!),
     onSuccess: () => {
@@ -67,7 +79,25 @@ export default function CitaPage() {
     },
   })
 
+  const { data: disponibilidad, isLoading: loadingSlots } = useQuery({
+    queryKey: ['disponibilidad', cita?.barbero_id, reagFecha],
+    queryFn: () => getDisponibilidad(cita!.barbero_id, reagFecha),
+    enabled: showReagendar && !!reagFecha && !!cita,
+  })
+  const availableSlots = disponibilidad?.slots.filter((s) => s.disponible) ?? []
+
+  const reagendarMutation = useMutation({
+    mutationFn: () => reagendarCita(id!, `${reagFecha}T${reagSlot}:00`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cita', id] })
+      setShowReagendar(false)
+      setReagFecha('')
+      setReagSlot(null)
+    },
+  })
+
   const canCancel = cita?.estado === 'pendiente' || cita?.estado === 'confirmada'
+  const canReagendar = cita?.estado !== 'cancelada' && cita?.estado !== 'completada'
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white">
@@ -183,6 +213,108 @@ export default function CitaPage() {
                   >
                     {cancelMutation.isPending ? 'Cancelando...' : 'Cancelar cita'}
                   </button>
+                </div>
+              )}
+
+              {/* Reagendar */}
+              {canReagendar && (
+                <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
+                  <h3 className="text-white font-semibold mb-1">Reagendar cita</h3>
+                  <p className="text-neutral-400 text-sm mb-4">
+                    Elige una nueva fecha y hora para tu cita.
+                  </p>
+
+                  {!showReagendar ? (
+                    <button
+                      onClick={() => setShowReagendar(true)}
+                      className="w-full bg-[#c9a84c] hover:bg-[#b8973e] text-black font-semibold py-3 rounded-xl transition-colors"
+                    >
+                      Reagendar cita
+                    </button>
+                  ) : (
+                    <div className="space-y-5">
+                      <div>
+                        <label className="block text-sm text-neutral-400 mb-2">Nueva fecha</label>
+                        <input
+                          type="date"
+                          min={today}
+                          max={maxDate}
+                          value={reagFecha}
+                          onChange={(e) => {
+                            setReagFecha(e.target.value)
+                            setReagSlot(null)
+                          }}
+                          className="w-full bg-neutral-900 border border-neutral-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#c9a84c] [color-scheme:dark]"
+                        />
+                      </div>
+
+                      {reagFecha && (
+                        <div>
+                          <label className="block text-sm text-neutral-400 mb-3">
+                            Horarios disponibles
+                          </label>
+
+                          {loadingSlots && (
+                            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                              {Array.from({ length: 12 }).map((_, i) => (
+                                <div key={i} className="h-10 bg-neutral-800 rounded-lg animate-pulse" />
+                              ))}
+                            </div>
+                          )}
+
+                          {!loadingSlots && availableSlots.length === 0 && (
+                            <p className="text-neutral-500 text-center py-6">
+                              No hay disponibilidad ese día
+                            </p>
+                          )}
+
+                          {!loadingSlots && availableSlots.length > 0 && (
+                            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                              {availableSlots.map((slot) => (
+                                <button
+                                  key={slot.hora}
+                                  onClick={() => setReagSlot(slot.hora)}
+                                  className={`py-2 rounded-lg text-sm font-medium transition-colors ${
+                                    reagSlot === slot.hora
+                                      ? 'bg-[#c9a84c] text-black'
+                                      : 'bg-neutral-800 text-white hover:bg-neutral-700'
+                                  }`}
+                                >
+                                  {slot.hora.slice(0, 5)}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {reagendarMutation.isError && (
+                        <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+                          No se pudo reagendar. El slot puede ya no estar disponible.
+                        </p>
+                      )}
+
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => {
+                            setShowReagendar(false)
+                            setReagFecha('')
+                            setReagSlot(null)
+                          }}
+                          className="flex-1 border border-neutral-700 hover:border-neutral-500 text-white py-3 rounded-xl transition-colors"
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          disabled={!reagSlot || reagendarMutation.isPending}
+                          onClick={() => reagendarMutation.mutate()}
+                          className="flex-1 bg-[#c9a84c] hover:bg-[#b8973e] disabled:opacity-40 disabled:cursor-not-allowed text-black font-semibold py-3 rounded-xl transition-colors"
+                        >
+                          {reagendarMutation.isPending ? 'Reagendando...' : 'Confirmar reagendado'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
