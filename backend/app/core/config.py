@@ -15,7 +15,8 @@ class Settings(BaseSettings):
 
     @property
     def ALLOWED_ORIGINS(self) -> list[str]:
-        return [o.strip() for o in self.ALLOWED_ORIGINS_STR.split(",") if o.strip()]
+        raw = self.ALLOWED_ORIGINS_STR.strip().strip('"').strip("'")
+        return [o.strip().strip('"').strip("'") for o in raw.split(",") if o.strip()]
 
 
 settings = Settings()
