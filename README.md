@@ -268,8 +268,8 @@ tests/test_security.py::test_create_refresh_token_incluye_type_refresh PASSED
 **Diego Alejandro Correa** — Full-Stack Developer · Medellín, Colombia
 
 - GitHub: [@dacq7](https://github.com/dacq7)
-- LinkedIn: [linkedin.com/in/placeholder](#) ← replace with your real profile
-- Upwork: [upwork.com/placeholder](#) ← replace with your real profile
+- LinkedIn: 
+- Upwork: 
 
 ---
 
