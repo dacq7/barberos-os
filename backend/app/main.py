@@ -44,10 +44,4 @@ app.include_router(public.router, prefix="/api/v1")
 async def health():
     return {"status": "ok"}
 
-@app.get("/debug-cors")
-async def debug_cors():
-    from app.core.config import settings
-    return {
-        "ALLOWED_ORIGINS_STR": settings.ALLOWED_ORIGINS_STR,
-        "ALLOWED_ORIGINS": settings.ALLOWED_ORIGINS
     }
