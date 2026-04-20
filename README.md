@@ -1,8 +1,12 @@
+<div align="center">
+
 # BarberOS
 
 Full-stack barbershop management system — online booking, barber schedules, commission tracking, and inventory in one platform.
 
-![Python](https://img.shields.io/badge/Python-3.12-blue?style=flat-square) ![FastAPI](https://img.shields.io/badge/FastAPI-0.135-green?style=flat-square) ![React](https://img.shields.io/badge/React-19-cyan?style=flat-square) ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?style=flat-square) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue?style=flat-square) ![Docker](https://img.shields.io/badge/Docker-blue?style=flat-square) ![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square) [![Live Demo](https://img.shields.io/badge/Live%20Demo-brightgreen?style=flat-square)](https://barberos-os.vercel.app)
+![Python](https://img.shields.io/badge/Python-3.12-blue?style=flat-square) ![FastAPI](https://img.shields.io/badge/FastAPI-0.135-green?style=flat-square) ![React](https://img.shields.io/badge/React-19-cyan?style=flat-square) ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?style=flat-square) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue?style=flat-square) ![Docker](https://img.shields.io/badge/Docker-blue?style=flat-square) ![Tests](https://img.shields.io/badge/Tests-37%20passing-brightgreen?style=flat-square) ![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square) [![Live Demo](https://img.shields.io/badge/Live%20Demo-brightgreen?style=flat-square)](https://barberos-os.vercel.app)
+
+</div>
 
 ---
 
@@ -70,7 +74,7 @@ Full-stack barbershop management system — online booking, barber schedules, co
 - 🔐 **JWT auth with refresh tokens** — separate OAuth2 flows for Admin and Barber roles, bcrypt password hashing
 - 📊 **Real-time admin dashboard** — daily appointments, monthly revenue, pending count, and per-barber commission breakdown
 - 🐳 **Docker ready** — full local environment with docker-compose in one command, includes PostgreSQL and nginx
-- ✅ **15 passing tests** — pytest suite covering JWT security, booking business rules, and commission calculations
+- ✅ **37 passing tests** — pytest suite covering auth flows, booking validation, role-based access, Pydantic schemas and commission calculations
 - 📖 **OpenAPI documentation** — 25+ documented endpoints at /docs with request/response schemas
 
 ---
@@ -92,7 +96,7 @@ Full-stack barbershop management system — online booking, barber schedules, co
 | APScheduler | — | Email reminder jobs |
 | Resend | — | Transactional email delivery |
 | Docker | — | Containerization |
-| pytest | — | Testing (15 passing tests) |
+| pytest | — | Testing (37 passing tests) |
 
 ### Frontend
 
@@ -116,12 +120,11 @@ Full-stack barbershop management system — online booking, barber schedules, co
 - **Pydantic v2 schemas** — 2x faster validation vs v1; strict typing enforced across all API boundaries with zero `Any` types
 - **TanStack Query v5** — server state per role with automatic cache invalidation; no redundant API calls across dashboards
 - **APScheduler in-process** — reminder jobs run inside uvicorn without Redis or Celery; ±15 min tolerance windows prevent duplicate sends
+- **UUID type safety** — JWT `sub` field explicitly cast to `uuid.UUID` before DB queries, preventing silent driver-level type coercion failures
 
 ---
 
 ## Project Structure
-
-```
 barberos/
 ├── backend/
 │   ├── app/
@@ -139,23 +142,29 @@ barberos/
 │   ├── alembic/                   # Schema migration history
 │   ├── scripts/
 │   │   └── seed.py                # Demo data seeder (barbers, services, appointments)
-│   ├── tests/                     # pytest suite — security, booking rules, commissions
+│   ├── tests/
+│   │   ├── conftest.py            # AsyncClient fixture with in-memory SQLite DB
+│   │   ├── test_auth.py           # 6 HTTP tests — login flows and protected routes
+│   │   ├── test_citas.py          # 5 HTTP tests — booking creation and validation
+│   │   ├── test_schemas.py        # 11 unit tests — Pydantic schema validation
+│   │   ├── test_cita_service.py   # Business rules — booking constraints and cancellation
+│   │   ├── test_pago_service.py   # Commission calculations and payment rules
+│   │   └── test_security.py       # JWT generation, hashing and token validation
 │   ├── .env.example
 │   └── requirements.txt
 │
 └── frontend/
-    └── src/
-        ├── api/                   # Axios instance + per-domain request functions
-        ├── components/            # Shared components (layouts, route guards, UI)
-        ├── pages/
-        │   ├── admin/             # AdminDashboard, AdminBarberos, AdminServicios,
-        │   │                      #   AdminCitas, AdminHorarios, AdminPagos, AdminInventario
-        │   ├── barbero/           # BarberoAgenda, BarberoGanancias, BarberoInventario
-        │   └── public/            # HomePage, ReservarPage, CitaPage (3-step booking flow)
-        ├── store/                 # Zustand stores (authStore per role)
-        ├── types/                 # TypeScript interfaces mirroring backend schemas
-        └── utils/                 # Date/time helpers (Bogotá timezone)
-```
+└── src/
+├── api/                   # Axios instance + per-domain request functions
+├── components/            # Shared components (layouts, route guards, UI)
+├── pages/
+│   ├── admin/             # AdminDashboard, AdminBarberos, AdminServicios,
+│   │                      #   AdminCitas, AdminHorarios, AdminPagos, AdminInventario
+│   ├── barbero/           # BarberoAgenda, BarberoGanancias, BarberoInventario
+│   └── public/            # HomePage, ReservarPage, CitaPage (3-step booking flow)
+├── store/                 # Zustand stores (authStore per role)
+├── types/                 # TypeScript interfaces mirroring backend schemas
+└── utils/                 # Date/time helpers (Bogotá timezone)
 
 ---
 
@@ -240,8 +249,27 @@ pytest tests/ -v
 ```
 
 Expected output:
-
-```
+tests/test_auth.py::test_login_barbero_valido PASSED
+tests/test_auth.py::test_login_password_incorrecta PASSED
+tests/test_auth.py::test_login_usuario_inexistente PASSED
+tests/test_auth.py::test_login_admin_valido PASSED
+tests/test_auth.py::test_ruta_protegida_con_token PASSED
+tests/test_auth.py::test_ruta_protegida_sin_token PASSED
+tests/test_citas.py::test_crear_cita_datos_completos PASSED
+tests/test_citas.py::test_crear_cita_datos_incompletos PASSED
+tests/test_citas.py::test_listar_citas_admin PASSED
+tests/test_citas.py::test_crear_cita_fecha_invalida PASSED
+tests/test_citas.py::test_crear_cita_sin_horario PASSED
+tests/test_schemas.py::test_login_schema_email_valido PASSED
+tests/test_schemas.py::test_login_schema_email_invalido PASSED
+tests/test_schemas.py::test_cita_schema_completo PASSED
+tests/test_schemas.py::test_cita_schema_sin_campos_requeridos PASSED
+tests/test_schemas.py::test_barbero_schema_valido PASSED
+tests/test_schemas.py::test_barbero_schema_email_invalido PASSED
+tests/test_schemas.py::test_horario_schema_valido PASSED
+tests/test_schemas.py::test_inventario_schema_stock_negativo PASSED
+tests/test_schemas.py::test_pago_schema_valido PASSED
+tests/test_schemas.py::test_servicio_schema_precio_negativo PASSED
 tests/test_cita_service.py::test_crear_cita_falla_fecha_menos_30_min PASSED
 tests/test_cita_service.py::test_crear_cita_falla_slot_no_disponible PASSED
 tests/test_cita_service.py::test_cancelar_cita_cambia_estado PASSED
@@ -257,20 +285,20 @@ tests/test_security.py::test_verify_password_correcto PASSED
 tests/test_security.py::test_verify_password_incorrecto PASSED
 tests/test_security.py::test_create_access_token_genera_jwt_valido PASSED
 tests/test_security.py::test_create_refresh_token_incluye_type_refresh PASSED
-
-15 passed in 3.75s
-```
+37 passed in 3.75s
 
 ---
 
 ## Author
 
-**Diego Alejandro Correa** — Full-Stack Developer · Medellín, Colombia
+**Diego Alejandro Correa** — Full-Stack Developer · Founder of [Veridis Dev](https://veridisdev.com)  
+Medellín, Colombia 🇨🇴
 
 - GitHub: [@dacq7](https://github.com/dacq7)
-- LinkedIn: 
-- Upwork: 
+- LinkedIn: [Diego Alejandro Correa](https://linkedin.com/in/diego-alejandro-correa-quiroz-bb50b9339)
+- Email: team@veridisdev.com
+- Web: veridisdev.com
 
 ---
 
-<p align="center">Built with FastAPI + React · Deployed on Railway &amp; Vercel</p>
+<p align="center">Built with FastAPI + React · Deployed on Railway &amp; Vercel · © 2025 Veridis Dev</p>
