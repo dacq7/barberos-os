@@ -11,6 +11,7 @@ from datetime import time
 from decimal import Decimal
 
 import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -18,12 +19,14 @@ from sqlalchemy.orm import sessionmaker
 # so that create_all() creates all tables (including FK targets).
 import app.db.models  # noqa: F401
 
-from app.db.database import Base
+from app.core.security import create_access_token, hash_password
+from app.db.database import Base, get_db
+from app.db.models.admin import Admin
 from app.db.models.barbero import Barbero
 from app.db.models.cliente import Cliente
 from app.db.models.horario import Horario
 from app.db.models.servicio import Servicio
-from app.core.security import hash_password
+from app.main import app
 
 _TEST_DB_URL = "sqlite+aiosqlite:///:memory:"
 
@@ -45,6 +48,53 @@ async def db():
 
     await engine.dispose()
 
+
+@pytest_asyncio.fixture
+async def client(db: AsyncSession):
+    """AsyncClient apuntando a la app FastAPI con BD en memoria.
+
+    Sobreescribe get_db para que cada request use la misma sesión de test,
+    de modo que los datos insertados en fixtures sean visibles en los handlers.
+    """
+    async def override_get_db():
+        yield db
+
+    app.dependency_overrides[get_db] = override_get_db
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        yield ac
+    app.dependency_overrides.clear()
+
+
+# ── Fixtures de usuarios ───────────────────────────────────────────────────────
+
+@pytest_asyncio.fixture
+async def admin_user(db: AsyncSession) -> Admin:
+    """Admin activo con contraseña conocida ('admin1234') para tests de login."""
+    admin = Admin(
+        nombre="Admin Test",
+        email="admin@test.com",
+        password_hash=hash_password("admin1234"),
+        activo=True,
+    )
+    db.add(admin)
+    await db.commit()
+    await db.refresh(admin)
+    return admin
+
+
+@pytest_asyncio.fixture
+async def admin_token(admin_user: Admin) -> str:
+    """JWT de acceso con role='admin' listo para usar en el header Authorization."""
+    return create_access_token({"sub": str(admin_user.id), "role": "admin"})
+
+
+@pytest_asyncio.fixture
+async def barbero_token(sample_barbero: Barbero) -> str:
+    """JWT de acceso con role='barbero' para el sample_barbero."""
+    return create_access_token({"sub": str(sample_barbero.id), "role": "barbero"})
+
+
+# ── Fixtures de datos de negocio ───────────────────────────────────────────────
 
 @pytest_asyncio.fixture
 async def sample_barbero(db: AsyncSession) -> Barbero:

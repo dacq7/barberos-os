@@ -63,7 +63,7 @@ async def get_current_admin(
     if payload.get("role") != "admin":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No autorizado")
 
-    admin_id = payload.get("sub")
+    admin_id = uuid.UUID(payload.get("sub"))
     result = await db.execute(select(Admin).where(Admin.id == admin_id))
     admin = result.scalar_one_or_none()
 
@@ -83,7 +83,7 @@ async def get_current_barbero(
     if payload.get("role") != "barbero":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No autorizado")
 
-    barbero_id = payload.get("sub")
+    barbero_id = uuid.UUID(payload.get("sub"))
     result = await db.execute(select(Barbero).where(Barbero.id == barbero_id))
     barbero = result.scalar_one_or_none()
 

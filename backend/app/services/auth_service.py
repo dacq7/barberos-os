@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -64,7 +66,7 @@ async def refresh_access_token(refresh_token: str, db: AsyncSession) -> TokenRes
         )
 
     role = payload.get("role")
-    user_id = payload.get("sub")
+    user_id = uuid.UUID(payload.get("sub"))
 
     if role == "admin":
         result = await db.execute(select(Admin).where(Admin.id == user_id))
